@@ -9,6 +9,7 @@
  * @date March, 2020
  */
 #pragma once
+#include <vector>
 
 // Add the minimal number of includes you need in order to declare the class.
 // #include ...
@@ -31,6 +32,9 @@ class Grid {
     int total_cells;
     int dead_cells;
     int alive_cells;
+    std::vector<Cell> cellList;
+
+    int get_index() const;
 
   public:
     Grid(); //The default constructor
@@ -44,4 +48,12 @@ class Grid {
     int get_total_cells() const;
     int get_alive_cells() const;
     int get_dead_cells() const;
+    void resize(int x);
+    void resize(int x, int y);
+    int get_index(int x, int y);
+    Cell get(int x, int y);
+    //Cell operator()(int x, int y);
+    //Cell* operator()(int x, int y);
+    Grid crop(int x, int y, int a, int b);
+    void set(int x, int y, Cell c);
 };

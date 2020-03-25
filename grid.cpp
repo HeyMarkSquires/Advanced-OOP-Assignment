@@ -8,9 +8,10 @@
  *
  * You are encouraged to use STL container types as an underlying storage mechanism for the grid cells.
  *
- * @author YOUR_STUDENT_NUMBER
+ * @author 963356
  * @date March, 2020
  */
+#include <iostream>
 #include "grid.h"
 
 // Include the minimal number of headers needed to support your implementation.
@@ -29,7 +30,7 @@
  *
  */
 
- Grid::Grid(){
+ Grid::Grid():width(0), height(0), total_cells(0), dead_cells(0), alive_cells(0){
 
  }
 
@@ -58,8 +59,14 @@
  */
 
  Grid::Grid(int square_size) : width(square_size), height(square_size),
- total_cells(square_size*square_size){
-
+ total_cells(square_size*square_size), dead_cells(square_size*square_size), alive_cells(0){
+   int tcells=square_size*square_size;
+   std::vector<Cell> cList;
+   cList.resize(tcells);
+   for (int i=0; i<tcells; i++){
+     cList.at(i)=Cell::DEAD;
+   }
+   this->cellList=cList;
  }
 
 /**
@@ -79,8 +86,14 @@
  *      The height of the grid.
  */
  Grid::Grid(int width, int height) : width(width), height(height),
- total_cells(width*height){
-
+ total_cells(width*height), dead_cells(width*height), alive_cells(0){
+   int tcells=width*height;
+   std::vector<Cell> cList;
+   cList.resize(tcells);
+   for (int i=0; i<tcells; i++){
+     cList.at(i)=Cell::DEAD;
+   }
+   this->cellList=cList;
  }
 
 /**
@@ -108,7 +121,7 @@
  */
 
  int Grid::get_width() const{
-   return width;
+   return this->width;
  }
 
 /**
@@ -136,7 +149,7 @@
  */
 
  int Grid::get_height() const{
-   return height;
+   return this->height;
  }
 
 /**
@@ -163,8 +176,8 @@
  *      The number of total cells.
  */
 
- int Grid::total_cells() const{
-   return total_cells;
+ int Grid::get_total_cells() const{
+   return this->total_cells;
  }
 
 /**
@@ -191,6 +204,9 @@
  *      The number of alive cells.
  */
 
+ int Grid::get_alive_cells() const{
+   return this->alive_cells;
+ }
 
 /**
  * Grid::get_dead_cells()
@@ -216,6 +232,9 @@
  *      The number of dead cells.
  */
 
+ int Grid::get_dead_cells() const{
+   return this->dead_cells;
+ }
 
 /**
  * Grid::resize(square_size)
@@ -235,6 +254,24 @@
  *      The new edge size for both the width and height of the grid.
  */
 
+void Grid::resize(int square_size){
+  this->width=square_size;
+  this->height=square_size;
+  std::vector<Cell> currList=this->cellList;
+  std::vector<Cell> newList;
+  int currLength=currList.size();
+  int newLength=square_size*square_size;
+  newList.resize(newLength);
+  for (int i=0; i<newLength; i++){
+    newList.at(i)=Cell::DEAD;
+  }
+  for (int i=0; i<currLength; i++){
+    if (currList.at(i)==Cell::ALIVE){
+      newList.at(i)=Cell::ALIVE;
+    }
+  }
+  this->cellList=newList;
+}
 
 /**
  * Grid::resize(width, height)
@@ -257,6 +294,30 @@
  *      The new height for the grid.
  */
 
+ void Grid::resize(int width, int height){
+   this->width=width;
+   this->height=height;
+   this->total_cells=width*height;
+   //Updating the number of dead cells
+   int alive=this->alive_cells;
+   int newdead=(width*height)-alive;
+   this->dead_cells=newdead;
+   std::vector<Cell> currList=this->cellList;
+   std::vector<Cell> newList;
+   int currLength=currList.size();
+   int newLength=width*height;
+   newList.resize(newLength);
+   std::cout<<newList.size()<<std::endl;
+   for (int i=0; i<newLength; i++){
+     newList.at(i)=Cell::DEAD;
+   }
+   for (int i=0; i<currLength; i++){
+     if (currList.at(i)==Cell::ALIVE){
+       newList.at(i)=Cell::ALIVE;
+     }
+   }
+   this->cellList=newList;
+ }
 
 /**
  * Grid::get_index(x, y)
@@ -275,6 +336,11 @@
  *      The 1d offset from the start of the data array where the desired cell is located.
  */
 
+ int Grid::get_index(int x, int y){
+   int w=this->width;
+   int result=(y*w)+x;
+   return result;
+ }
 
 /**
  * Grid::get(x, y)
@@ -305,6 +371,13 @@
  *      std::exception or sub-class if x,y is not a valid coordinate within the grid.
  */
 
+ Cell Grid::get(int x, int y){
+   Cell n;
+   int w=this->width;
+   int index=(y*w)+x;
+   n=(this->cellList).at(index);
+   return n;
+ }
 
 /**
  * Grid::set(x, y, value)
@@ -333,6 +406,34 @@
  * @throws
  *      std::exception or sub-class if x,y is not a valid coordinate within the grid.
  */
+ void Grid::set(int x, int y, Cell c){
+   int w=this->width;
+   int index=(y*w)+x;
+   std::vector<Cell> l=this->cellList;
+   int currAlive=this->alive_cells;
+   int currDead=this->dead_cells;
+   //Getting the current state of the cell
+
+   if (c==Cell::ALIVE){
+     currAlive++;
+     if (currDead>0){
+       currDead--;
+     }
+     l.at(index)=Cell::ALIVE;
+   }
+   else if (c==Cell::DEAD){
+     if (currAlive>0){
+       currAlive--;
+     }
+     currDead++;
+     l.at(index)=Cell::DEAD;
+   }
+
+   //Finally, replace the cellList with the new cellList
+   this->cellList=l;
+   this->alive_cells=currAlive;
+   this->dead_cells=currDead;
+ }
 
 
 /**
@@ -370,7 +471,13 @@
  * @throws
  *      std::runtime_error or sub-class if x,y is not a valid coordinate within the grid.
  */
-
+/**Cell* Grid::operator()(int x, int y){
+  int index=this->get_index(x, y);
+  std::vector<Cell> cList=this->cellList;
+  Cell* c=cList.at(index);
+  std::cout<<"/"<<(char)c<<"/"<<std::endl;
+  return c;
+}*/
 
 /**
  * Grid::operator()(x, y)
@@ -403,6 +510,14 @@
  *      std::exception or sub-class if x,y is not a valid coordinate within the grid.
  */
 
+/**Cell Grid::operator()(int x, int y) const{
+   Cell result;
+   int index=this->get_index(x, y);
+   std::vector<Cell> cList=this->cellList;
+   Cell c=cList.at(index);
+   std::cout<<"/"<<(char)c<<"/"<<std::endl;
+   return c;
+ }*/
 
 /**
  * Grid::crop(x0, y0, x1, y1)
@@ -439,6 +554,96 @@
  *      or if the crop window has a negative size.
  */
 
+Grid Grid::crop(int x0, int y0, int x1, int y1){
+  std::vector<Cell> currList=this->cellList;
+  int height;
+  int width;
+  if (x0<x1){
+    width=x1-x0;
+  }
+  else{
+    width=x0-x1;
+  }
+  if (y0<y1){
+    height=x1-x0;
+  }
+  else{
+    height=y0-y1;
+  }
+  Grid* g=new Grid(width, height);
+  int newLength=width*height;
+  std::vector<Cell> newList;
+  newList.resize(newLength);
+  int totalAlive=0;
+  int totalDead=0;
+  int newIndex=0;
+
+  //Making sure we move in the correct y direction
+  if (y0<y1){
+    for (int i=y0; i<y1; i++){
+      if (x0<x1){
+        for (int j=x0; j<x1; j++){
+          Cell cell=this->get(j, i);
+          if (cell==Cell::ALIVE){
+            totalAlive++;
+          }
+          else{
+            totalDead++;
+          }
+          newList.at(newIndex)=cell;
+          newIndex++;
+        }
+      }
+      else{
+        for (int j=x1; j<x0; j++){
+          Cell cell=this->get(j, i);
+          if (cell==Cell::ALIVE){
+            totalAlive++;
+          }
+          else{
+            totalDead++;
+          }
+          newList.at(newIndex)=cell;
+          newIndex++;
+        }
+      }
+    }
+  }
+  else{
+    for (int i=y1; i<y0; i++){
+      if (x0<x1){
+        for (int j=x0; j<x1; j++){
+          Cell cell=this->get(j, i);
+          if (cell==Cell::ALIVE){
+            totalAlive++;
+          }
+          else{
+            totalDead++;
+          }
+          newList.at(newIndex)=cell;
+          newIndex++;
+        }
+      }
+      else{
+        for (int j=x1; j<x0; j++){
+          Cell cell=this->get(j, i);
+          if (cell==Cell::ALIVE){
+            totalAlive++;
+          }
+          else{
+            totalDead++;
+          }
+          newList.at(newIndex)=cell;
+          newIndex++;
+        }
+      }
+    }
+  }
+  g->dead_cells=totalDead;
+  g->alive_cells=totalAlive;
+  g->cellList=newList;
+  return *g;
+}
 
 /**
  * Grid::merge(other, x0, y0, alive_only = false)
@@ -538,3 +743,6 @@
  * @return
  *      Returns a reference to the output stream to enable operator chaining.
  */
+ Grid::~Grid(){
+   std::cout<<"Destructor called"<<std::endl;
+ }

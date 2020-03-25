@@ -23,5 +23,17 @@ class World {
     // How to draw an owl:
     //      Step 1. Draw a circle.
     //      Step 2. Draw the rest of the owl.
+  private:
+    int width;
+    int height;
+    int total_cells;
+    int alive_cells;
+    int dead_cells;
+  public:
+    World();
+    World(int size);
+    World(int width, int height);
+    ~World();
 
+    
 };

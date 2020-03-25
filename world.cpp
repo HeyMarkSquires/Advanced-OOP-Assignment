@@ -38,6 +38,10 @@
  *
  */
 
+World::World(){
+  this->width=0;
+  this->height=0;
+}
 
 /**
  * World::World(square_size)
@@ -59,6 +63,9 @@
  *      The edge size to use for the width and height of the world.
  */
 
+ World::World(int square_size) : width(square_size), height(square_size){
+
+ }
 
 /**
  * World::World(width, height)
@@ -76,6 +83,10 @@
  *      The height of the world.
  */
 
+ World::World(int _width, int _height) : width(_width), height(_height),
+ total_cells(_width*_height){
+
+ }
 
 /**
  * World::World(initial_state)
