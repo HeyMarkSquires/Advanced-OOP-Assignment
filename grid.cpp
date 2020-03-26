@@ -407,11 +407,11 @@ void Grid::resize(int square_size){
  *      std::exception or sub-class if x,y is not a valid coordinate within the grid.
  */
  void Grid::set(int x, int y, Cell c){
-   int w=this->width;
+   int w=this->get_width();
    int index=(y*w)+x;
    std::vector<Cell> l=this->cellList;
-   int currAlive=this->alive_cells;
-   int currDead=this->dead_cells;
+   int currAlive=this->get_alive_cells();
+   int currDead=this->get_dead_cells();
    //Getting the current state of the cell
 
    if (c==Cell::ALIVE){
@@ -683,6 +683,83 @@ Grid Grid::crop(int x0, int y0, int x1, int y1){
  *      std::exception or sub-class if the other grid being placed does not fit within the bounds of the current grid.
  */
 
+void Grid::merge(Grid other, int x0, int y0){
+  std::vector<Cell> otherCellList=other.cellList;
+  std::vector<Cell> myCellList=this->cellList;
+  int totalDead=this->get_dead_cells();
+  int totalAlive=this->get_alive_cells();
+  int otherHeight=other.get_height();
+  int otherWidth=other.get_width();
+  int index=0;
+  int myIndex;
+  for (int i=y0; i<otherHeight+y0; i++){
+    for (int j=x0; j<otherWidth+x0; j++){
+      myIndex=this->get_index(j, i);
+
+      Cell c=otherCellList.at(index);
+      //Increasing the dead count if required
+      if (c==Cell::DEAD && myCellList.at(myIndex)==Cell::ALIVE){
+        totalDead++;
+        totalAlive--;
+      }
+      else if (c==Cell::ALIVE && myCellList.at(myIndex)==Cell::DEAD){
+        totalDead--;
+        totalAlive++;
+      }
+      myCellList.at(myIndex)=c;
+      index++;
+    }
+  }
+
+  this->cellList=myCellList;
+  this->alive_cells=totalAlive;
+  this->dead_cells=totalDead;
+
+}
+
+void Grid::merge(Grid other, int x0, int y0, bool alive_only){
+  std::vector<Cell> otherCellList=other.cellList;
+  std::vector<Cell> myCellList=this->cellList;
+  int totalDead=this->get_dead_cells();
+  int totalAlive=this->get_alive_cells();
+  int otherHeight=other.get_height();
+  int otherWidth=other.get_width();
+  int index=0;
+  int myIndex;
+  for (int i=y0; i<otherHeight+y0; i++){
+    for (int j=x0; j<otherWidth+x0; j++){
+      myIndex=this->get_index(j, i);
+
+      Cell c=otherCellList.at(index);
+      //If alive_only is true, kill the merged cells that are alive
+      if (alive_only){
+        if (c==Cell::DEAD && myCellList.at(myIndex)==Cell::ALIVE){
+          totalDead++;
+          totalAlive--;
+          myCellList.at(myIndex)=c;
+        }
+      }
+      else{
+        if (c==Cell::DEAD && myCellList.at(myIndex)==Cell::ALIVE){
+          totalDead++;
+          totalAlive--;
+        }
+        else if (c==Cell::ALIVE && myCellList.at(myIndex)==Cell::DEAD){
+          totalDead--;
+          totalAlive++;
+        }
+        myCellList.at(myIndex)=c;
+      }
+      //Increasing the dead count if required
+
+      index++;
+    }
+  }
+
+  this->cellList=myCellList;
+  this->alive_cells=totalAlive;
+  this->dead_cells=totalDead;
+}
 
 /**
  * Grid::rotate(rotation)
@@ -707,6 +784,49 @@ Grid Grid::crop(int x0, int y0, int x1, int y1){
  *      Returns a copy of the grid that has been rotated.
  */
 
+Grid Grid::rotate(int rotation) const{
+  int newHeight;
+  int newWidth;
+  int oldHeight=this->height;
+  int oldWidth=this->width;
+  std::vector<Cell> newCellList;
+  newCellList.resize(newHeight*newWidth);
+  //0 degrees
+  if (rotation%4==0){
+    newHeight=this->width;
+    newWidth=this->height;
+  }
+  //90 degrees (Fin)
+  else if (rotation%4==1 || rotation%4==-3){
+    newHeight=this->width;
+    newWidth=this->height;
+    for (int i=0; i<newHeight; i++){
+      for (int j=newWidth-1; j>=0; j--){
+        std::cout<<i<<", "<<j<<std::endl;
+      }
+    }
+  }
+  //180 degrees (Fin)
+  else if (rotation%4==2 || rotation%4==-2){
+    newHeight=this->height;
+    newWidth=this->width;
+    for (int i=newHeight-1; i>=0; i--){
+      for (int j=newWidth-1; j>=0; j--){
+        std::cout<<j<<", "<<i<<std::endl;
+      }
+    }
+  }
+  //270 degrees (Fin)
+  else if (rotation%4==3 || rotation%4==-1){
+    newHeight=this->width;
+    newWidth=this->height;
+    for (int i=newWidth-1; i>=0; i--){
+      for (int j=0; j<newHeight; j++){
+        std::cout<<i<<", "<<j<<std::endl;
+      }
+    }
+  }
+}
 
 /**
  * operator<<(output_stream, grid)
@@ -744,5 +864,10 @@ Grid Grid::crop(int x0, int y0, int x1, int y1){
  *      Returns a reference to the output stream to enable operator chaining.
  */
  Grid::~Grid(){
-   std::cout<<"Destructor called"<<std::endl;
+ }
+
+int main(){
+   Grid w(4, 3);
+   w.rotate(2);
+   return 0;
  }

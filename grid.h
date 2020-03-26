@@ -56,4 +56,7 @@ class Grid {
     //Cell* operator()(int x, int y);
     Grid crop(int x, int y, int a, int b);
     void set(int x, int y, Cell c);
+    void merge(Grid grid, int a, int b);
+    void merge(Grid x, int a, int b, bool c);
+    Grid rotate(int rotation) const;
 };
