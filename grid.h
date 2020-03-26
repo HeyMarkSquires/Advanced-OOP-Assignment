@@ -51,7 +51,7 @@ class Grid {
     void resize(int x);
     void resize(int x, int y);
     int get_index(int x, int y);
-    Cell get(int x, int y);
+    Cell get(int x, int y) const;
     //Cell operator()(int x, int y);
     //Cell* operator()(int x, int y);
     Grid crop(int x, int y, int a, int b);
@@ -59,4 +59,5 @@ class Grid {
     void merge(Grid grid, int a, int b);
     void merge(Grid x, int a, int b, bool c);
     Grid rotate(int rotation) const;
+    //void operator<<(int x, int y) const;
 };

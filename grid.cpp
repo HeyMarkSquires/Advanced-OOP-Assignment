@@ -371,7 +371,7 @@ void Grid::resize(int square_size){
  *      std::exception or sub-class if x,y is not a valid coordinate within the grid.
  */
 
- Cell Grid::get(int x, int y){
+ Cell Grid::get(int x, int y) const{
    Cell n;
    int w=this->width;
    int index=(y*w)+x;
@@ -789,12 +789,17 @@ Grid Grid::rotate(int rotation) const{
   int newWidth;
   int oldHeight=this->height;
   int oldWidth=this->width;
+  int totalAlive=this->get_alive_cells();
+  int totalDead=this->get_dead_cells();
   std::vector<Cell> newCellList;
-  newCellList.resize(newHeight*newWidth);
-  //0 degrees
+  newCellList.resize(oldHeight*oldWidth);
+  int index=0;
+  //0 degrees, nothing changes
   if (rotation%4==0){
-    newHeight=this->width;
-    newWidth=this->height;
+    newHeight=this->height;
+    newWidth=this->width;
+    newCellList=this->cellList;
+
   }
   //90 degrees (Fin)
   else if (rotation%4==1 || rotation%4==-3){
@@ -802,7 +807,9 @@ Grid Grid::rotate(int rotation) const{
     newWidth=this->height;
     for (int i=0; i<newHeight; i++){
       for (int j=newWidth-1; j>=0; j--){
-        std::cout<<i<<", "<<j<<std::endl;
+        Cell c=this->get(i, j);
+        newCellList.at(index)=c;
+        index++;
       }
     }
   }
@@ -812,7 +819,9 @@ Grid Grid::rotate(int rotation) const{
     newWidth=this->width;
     for (int i=newHeight-1; i>=0; i--){
       for (int j=newWidth-1; j>=0; j--){
-        std::cout<<j<<", "<<i<<std::endl;
+        Cell c=this->get(j, i);
+        newCellList.at(index)=c;
+        index++;
       }
     }
   }
@@ -820,12 +829,19 @@ Grid Grid::rotate(int rotation) const{
   else if (rotation%4==3 || rotation%4==-1){
     newHeight=this->width;
     newWidth=this->height;
-    for (int i=newWidth-1; i>=0; i--){
-      for (int j=0; j<newHeight; j++){
-        std::cout<<i<<", "<<j<<std::endl;
+    for (int i=newHeight-1; i>=0; i--){
+      for (int j=0; j<newWidth; j++){
+        Cell c=this->get(i, j);
+        newCellList.at(index)=c;
+        index++;
       }
     }
   }
+  Grid result(newWidth, newHeight);
+  result.cellList=newCellList;
+  result.alive_cells=totalAlive;
+  result.dead_cells=totalDead;
+  return result;
 }
 
 /**
@@ -863,11 +879,15 @@ Grid Grid::rotate(int rotation) const{
  * @return
  *      Returns a reference to the output stream to enable operator chaining.
  */
- Grid::~Grid(){
- }
 
-int main(){
-   Grid w(4, 3);
-   w.rotate(2);
-   return 0;
+ /**void Grid::operator<<(int x, int y) const{
+    Cell result;
+    int index=this->get_index(x, y);
+    std::vector<Cell> cList=this->cellList;
+    Cell c=cList.at(index);
+    std::cout<<"/"<<(char)c<<"/"<<std::endl;
+    return c;
+  }*/
+
+ Grid::~Grid(){
  }
