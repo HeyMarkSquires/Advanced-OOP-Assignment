@@ -10,6 +10,7 @@
  */
 #pragma once
 
+#include "grid.h"
 // Add the minimal number of includes you need in order to declare the class.
 // #include ...
 
@@ -29,11 +30,27 @@ class World {
     int total_cells;
     int alive_cells;
     int dead_cells;
+    Grid currState;
+    Grid newState;
   public:
     World();
     World(int size);
     World(int width, int height);
+    World(Grid grid);
+    int get_height() const;
+    int get_width() const;
+    int get_total_cells() const;
+    int get_alive_cells() const;
+    int get_dead_cells() const;
+    void resize(int square_size);
+    void resize(int new_width, int new_height);
+    int count_neighbours(int x, int y, bool toroidal);
+    Grid get_state() const;
+    void step(bool toroidal);
+    void step();
+    void advance(int steps, bool toroidal);
+    void advance(int steps);
     ~World();
 
-    
+
 };

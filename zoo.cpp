@@ -22,9 +22,15 @@
  * @date March, 2020
  */
 #include "zoo.h"
+#include "grid.h"
+#include "world.h"
+
 
 // Include the minimal number of headers needed to support your implementation.
 // #include ...
+#include <fstream>
+#include <iostream>
+#include <iomanip>
 
 /**
  * Zoo::glider()
@@ -47,6 +53,15 @@
  *      Returns a Grid containing a glider.
  */
 
+Grid Zoo::glider(){
+  Grid result(3, 3);
+  result.set(1, 0, Cell::ALIVE);
+  result.set(2, 1, Cell::ALIVE);
+  result.set(0, 2, Cell::ALIVE);
+  result.set(1, 2, Cell::ALIVE);
+  result.set(2, 2, Cell::ALIVE);
+  return result;
+}
 
 /**
  * Zoo::r_pentomino()
@@ -69,6 +84,15 @@
  *      Returns a Grid containing a r-pentomino.
  */
 
+Grid Zoo::r_pentomino(){
+  Grid result(3, 3);
+  result.set(1, 0, Cell::ALIVE);
+  result.set(2, 0, Cell::ALIVE);
+  result.set(0, 1, Cell::ALIVE);
+  result.set(1, 1, Cell::ALIVE);
+  result.set(1, 2, Cell::ALIVE);
+  return result;
+}
 
 /**
  * Zoo::light_weight_spaceship()
@@ -91,7 +115,19 @@
  * @return
  *      Returns a grid containing a light weight spaceship.
  */
-
+ Grid Zoo::light_weight_spaceship(){
+   Grid result(5, 4);
+   result.set(1, 0, Cell::ALIVE);
+   result.set(4, 0, Cell::ALIVE);
+   result.set(0, 1, Cell::ALIVE);
+   result.set(0, 2, Cell::ALIVE);
+   result.set(4, 2, Cell::ALIVE);
+   result.set(0, 3, Cell::ALIVE);
+   result.set(1, 3, Cell::ALIVE);
+   result.set(2, 3, Cell::ALIVE);
+   result.set(3, 3, Cell::ALIVE);
+   return result;
+ }
 
 /**
  * Zoo::load_ascii(path)
@@ -118,6 +154,17 @@
  *          - The character for a cell is not the ALIVE or DEAD character.
  */
 
+Grid Zoo::load_ascii(char* path){
+  ifstream inFile;
+  char in;
+  int width;
+  int height;
+  inFile.open(path);
+  if (!inFile) {
+    cout << "Unable to open file";
+    exit(1); // terminate with error
+  }
+}
 
 /**
  * Zoo::save_ascii(path, grid)
@@ -202,3 +249,8 @@
  *      Throws std::runtime_error or sub-class if the file cannot be opened.
  */
 
+int main(){
+  Grid g;
+  g = Zoo::load_ascii("test_inputs/GLIDER.gol");
+  return 0;
+}

@@ -22,7 +22,7 @@
  * @date March, 2020
  */
 #include "world.h"
-
+#include "grid.h"
 // Include the minimal number of headers needed to support your implementation.
 // #include ...
 
@@ -38,10 +38,7 @@
  *
  */
 
-World::World(){
-  this->width=0;
-  this->height=0;
-}
+World::World(){}
 
 /**
  * World::World(square_size)
@@ -63,7 +60,9 @@ World::World(){
  *      The edge size to use for the width and height of the world.
  */
 
- World::World(int square_size) : width(square_size), height(square_size){
+ World::World(int square_size): width(square_size), height(square_size),
+ total_cells(square_size*square_size), alive_cells(0),
+ dead_cells(square_size*square_size){
 
  }
 
@@ -83,8 +82,8 @@ World::World(){
  *      The height of the world.
  */
 
- World::World(int _width, int _height) : width(_width), height(_height),
- total_cells(_width*_height){
+ World::World(int _width, int _height): width(_width), height(_height),
+ total_cells(_width*_height), alive_cells(0), dead_cells(_width*_height){
 
  }
 
@@ -107,7 +106,16 @@ World::World(){
  * @param initial_state
  *      The state of the constructed world.
  */
+World::World(Grid initial_state){
+  this->height=initial_state.get_height();
+  this->width=initial_state.get_width();
+  this->total_cells=initial_state.get_total_cells();
+  this->alive_cells=initial_state.get_alive_cells();
+  this->dead_cells=initial_state.get_dead_cells();
+  this->currState=initial_state;
+}
 
+World::~World(){ }
 
 /**
  * World::get_width()
@@ -133,6 +141,9 @@ World::World(){
  *      The width of the world.
  */
 
+int World::get_width() const{
+  return this->width;
+}
 
 /**
  * World::get_height()
@@ -158,6 +169,9 @@ World::World(){
  *      The height of the world.
  */
 
+ int World::get_height() const{
+   return this->height;
+ }
 
 /**
  * World::get_total_cells()
@@ -182,7 +196,9 @@ World::World(){
  * @return
  *      The number of total cells.
  */
-
+ int World::get_total_cells() const{
+   return this->total_cells;
+ }
 
 /**
  * World::get_alive_cells()
@@ -207,6 +223,10 @@ World::World(){
  * @return
  *      The number of alive cells.
  */
+
+ int World::get_alive_cells() const{
+   return this->alive_cells;
+ }
 
 
 /**
@@ -233,6 +253,9 @@ World::World(){
  *      The number of dead cells.
  */
 
+int World::get_dead_cells() const{
+  return this->dead_cells;
+}
 
 /**
  * World::get_state()
@@ -259,6 +282,11 @@ World::World(){
  *      A reference to the current state.
  */
 
+Grid World::get_state() const{
+  Grid result=this->currState;
+  return result;
+
+}
 
 /**
  * World::resize(square_size)
@@ -280,6 +308,13 @@ World::World(){
  *      The new edge size for both the width and height of the grid.
  */
 
+void World::resize(int square_size){
+  Grid current=this->get_state();
+  current.resize(square_size);
+  this->currState=current;
+  this->dead_cells=(square_size*square_size)-current.get_alive_cells();
+  this->alive_cells=current.get_alive_cells();
+}
 
 /**
  * World::resize(new_width, new_height)
@@ -304,6 +339,13 @@ World::World(){
  *      The new height for the grid.
  */
 
+ void World::resize(int new_width, int new_height){
+   Grid current=this->get_state();
+   current.resize(new_width, new_height);
+   this->currState=current;
+   this->dead_cells=(new_width*new_height)-current.get_alive_cells();
+   this->alive_cells=current.get_alive_cells();
+ }
 
 /**
  * World::count_neighbours(x, y, toroidal)
@@ -336,7 +378,528 @@ World::World(){
  * @return
  *      Returns the number of alive neighbours.
  */
+int World::count_neighbours(int x, int y, bool toroidal){
+  int height=this->get_height();
+  int width=this->get_width();
 
+  int count=0;
+
+  Grid g=this->get_state();
+  //If the shape is toroidal
+  if (toroidal){
+    //If the shape is in the inner grid
+    if (x>0 && x<(width-1) && y>0 && y<(height-1)){
+      //Check the left
+      if (g.get(x-1, y)==Cell::ALIVE){
+        count++;
+      }
+      //Check the right
+      if (g.get(x+1, y)==Cell::ALIVE){
+        count++;
+      }
+      //Check the top
+      if (g.get(x, y-1)==Cell::ALIVE){
+        count++;
+      }
+      //Check the bottom
+      if (g.get(x, y+1)==Cell::ALIVE){
+        count++;
+      }
+      //Check the top-left
+      if (g.get(x-1, y-1)==Cell::ALIVE){
+        count++;
+      }
+      //Check the top-right
+      if (g.get(x+1, y-1)==Cell::ALIVE){
+        count++;
+      }
+      //Check the bottom-left
+      if (g.get(x-1, y+1)==Cell::ALIVE){
+        count++;
+      }
+      //Check the bottom-right
+      if (g.get(x+1, y+1)==Cell::ALIVE){
+        count++;
+      }
+    }
+    //If the coordinate is on the left in between the corners
+    else if (x==0 && y>0 && y<(height-1)){
+      //Check the left
+      if (g.get((width-1), y)==Cell::ALIVE){
+        count++;
+      }
+      //Check the right
+      if (g.get(x+1, y)==Cell::ALIVE){
+        count++;
+      }
+      //Check the top
+      if (g.get(x, y-1)==Cell::ALIVE){
+        count++;
+      }
+      //Check the bottom
+      if (g.get(x, y+1)==Cell::ALIVE){
+        count++;
+      }
+      //Check the top-right
+      if (g.get(x+1, y-1)==Cell::ALIVE){
+        count++;
+      }
+      //Check the bottom-right
+      if (g.get(x+1, y+1)==Cell::ALIVE){
+        count++;
+      }
+      //Check the top left
+      if (g.get(width-1, y-1)==Cell::ALIVE){
+        count++;
+      }
+      //Check the bottom left
+      if (g.get(width-1, y+1)==Cell::ALIVE){
+        count++;
+      }
+    }
+    //If the coordinate is on the right in between the corners
+    else if (x==(width-1) && y>0 && y<(height-1)){
+      //Check the left
+      if (g.get(x-1, y)==Cell::ALIVE){
+        count++;
+      }
+      //Check the right
+      if (g.get(0, y)==Cell::ALIVE){
+        count++;
+      }
+      //Check the top
+      if (g.get(x, y-1)==Cell::ALIVE){
+        count++;
+      }
+      //Check the bottom
+      if (g.get(x, y+1)==Cell::ALIVE){
+        count++;
+      }
+      //Check the bottom-left
+      if (g.get(x-1, y+1)==Cell::ALIVE){
+        count++;
+      }
+      //Check the top-left
+      if (g.get(x-1, y-1)==Cell::ALIVE){
+        count++;
+      }
+      //Check the bottom-right
+      if (g.get(0, y+1)==Cell::ALIVE){
+        count++;
+      }
+      //Check the top-right
+      if (g.get(0, y-1)==Cell::ALIVE){
+        count++;
+      }
+    }
+    //If the coordinate is on top in between the corners
+    else if (x>0 && x<(width-1) && y==0){
+      //Check the left
+      if (g.get(x-1, y)==Cell::ALIVE){
+        count++;
+      }
+      //Check the right
+      if (g.get(x+1, y)==Cell::ALIVE){
+        count++;
+      }
+      //Check the top
+      if (g.get(x, (height-1))==Cell::ALIVE){
+        count++;
+      }
+      //Check the bottom
+      if (g.get(x, y+1)==Cell::ALIVE){
+        count++;
+      }
+      //Check the bottom-left
+      if (g.get(x-1, y+1)==Cell::ALIVE){
+        count++;
+      }
+      //Check the top-left
+      if (g.get(x-1, height-1)==Cell::ALIVE){
+        count++;
+      }
+      //Check the bottom-right
+      if (g.get(x+1, y+1)==Cell::ALIVE){
+        count++;
+      }
+      //Check the top-right
+      if (g.get(x+1, height-1)==Cell::ALIVE){
+        count++;
+      }
+    }
+    //If the coordinate is on bottom in between the corners
+    else if (x>0 && x<(width-1) && y==(height-1)){
+      //Check the left
+      if (g.get(x-1, y)==Cell::ALIVE){
+        count++;
+      }
+      //Check the right
+      if (g.get(x+1, y)==Cell::ALIVE){
+        count++;
+      }
+      //Check the top
+      if (g.get(x, y-1)==Cell::ALIVE){
+        count++;
+      }
+      //Check the bottom
+      if (g.get(x, 0)==Cell::ALIVE){
+        count++;
+      }
+      //Check the bottom-left
+      if (g.get(x-1, 0)==Cell::ALIVE){
+        count++;
+      }
+      //Check the top-left
+      if (g.get(x-1, y-1)==Cell::ALIVE){
+        count++;
+      }
+      //Check the bottom-right
+      if (g.get(x+1, 0)==Cell::ALIVE){
+        count++;
+      }
+      //Check the top-right
+      if (g.get(x+1, y-1)==Cell::ALIVE){
+        count++;
+      }
+    }
+
+    //If the coordinate is the top left corner
+    else if(x==0 && y==0){
+      //Check the left
+      if (g.get(width-1, y)==Cell::ALIVE){
+        count++;
+      }
+      //Check the right
+      if (g.get(x+1, y)==Cell::ALIVE){
+        count++;
+      }
+      //Check the top
+      if (g.get(x, height-1)==Cell::ALIVE){
+        count++;
+      }
+      //Check the bottom
+      if (g.get(x, y+1)==Cell::ALIVE){
+        count++;
+      }
+      //Check the bottom-left
+      if (g.get(width-1, y+1)==Cell::ALIVE){
+        count++;
+      }
+      //Check the top-left
+      if (g.get(width-1, height-1)==Cell::ALIVE){
+        count++;
+      }
+      //Check the bottom-right
+      if (g.get(x+1, y+1)==Cell::ALIVE){
+        count++;
+      }
+      //Check the top-right
+      if (g.get(x+1, height-1)==Cell::ALIVE){
+        count++;
+      }
+    }
+    //If the coordinate is the top right corner
+    else if(x==(width-1) && y==0){
+      //Check the left
+      if (g.get(x-1, y)==Cell::ALIVE){
+        count++;
+      }
+      //Check the right
+      if (g.get(0, y)==Cell::ALIVE){
+        count++;
+      }
+      //Check the top
+      if (g.get(x, (height-1))==Cell::ALIVE){
+        count++;
+      }
+      //Check the bottom
+      if (g.get(x, y+1)==Cell::ALIVE){
+        count++;
+      }
+
+      //Check the bottom-left
+      if (g.get(width-1, y+1)==Cell::ALIVE){
+        count++;
+      }
+      //Check the top-left
+      if (g.get(x-1, height-1)==Cell::ALIVE){
+        count++;
+      }
+      //Check the bottom-right
+      if (g.get(0, y+1)==Cell::ALIVE){
+        count++;
+      }
+      //Check the top-right
+      if (g.get(0, height-1)==Cell::ALIVE){
+        count++;
+      }
+
+    }
+    //If the coordinate is the bottom left corner
+    else if(x==0 && y==(height-1)){
+      //Check the left
+      if (g.get(width-1, y)==Cell::ALIVE){
+        count++;
+      }
+      //Check the right
+      if (g.get(x+1, y)==Cell::ALIVE){
+        count++;
+      }
+      //Check the top
+      if (g.get(x, y-1)==Cell::ALIVE){
+        count++;
+      }
+      //Check the bottom
+      if (g.get(0, 0)==Cell::ALIVE){
+        count++;
+      }
+      //Check the bottom-left
+      if (g.get(width-1, 0)==Cell::ALIVE){
+        count++;
+      }
+      //Check the top-left
+      if (g.get(width-1, y-1)==Cell::ALIVE){
+        count++;
+      }
+      //Check the bottom-right
+      if (g.get(x+1, 0)==Cell::ALIVE){
+        count++;
+      }
+      //Check the top-right
+      if (g.get(x+1, y-1)==Cell::ALIVE){
+        count++;
+      }
+    }
+    //If the coordinate is the bottom right corner
+    else if(x==(width-1) && y==(height-1)){
+      //Check the left
+      if (g.get(x-1, y)==Cell::ALIVE){
+        count++;
+      }
+      //Check the right
+      if (g.get(0, y)==Cell::ALIVE){
+        count++;
+      }
+      //Check the top
+      if (g.get(x, y-1)==Cell::ALIVE){
+        count++;
+      }
+      //Check the bottom
+      if (g.get(x, 0)==Cell::ALIVE){
+        count++;
+      }
+      //Check the bottom-left
+      if (g.get(x-1, 0)==Cell::ALIVE){
+        count++;
+      }
+      //Check the top-left
+      if (g.get(x-1, y-1)==Cell::ALIVE){
+        count++;
+      }
+      //Check the bottom-right
+      if (g.get(0, 0)==Cell::ALIVE){
+        count++;
+      }
+      //Check the top-right
+      if (g.get(0, y-1)==Cell::ALIVE){
+        count++;
+      }
+    }
+  }
+  //If the shape isn't toroidal
+  else{
+    //If the shape is in the inner grid
+    if (x>0 && x<(width-1) && y>0 && y<(height-1)){
+      g.get(x, y+1);
+      //Check the left
+      if (g.get(x-1, y)==Cell::ALIVE){
+        count++;
+      }
+      //Check the right
+      if (g.get(x+1, y)==Cell::ALIVE){
+        count++;
+      }
+      //Check the top
+      if (g.get(x, y-1)==Cell::ALIVE){
+        count++;
+      }
+      //Check the bottom
+      if (g.get(x, y+1)==Cell::ALIVE){
+        count++;
+      }
+      //Check the top-left
+      if (g.get(x-1, y-1)==Cell::ALIVE){
+        count++;
+      }
+      //Check the top-right
+      if (g.get(x+1, y-1)==Cell::ALIVE){
+        count++;
+      }
+      //Check the bottom-left
+      if (g.get(x-1, y+1)==Cell::ALIVE){
+        count++;
+      }
+      //Check the bottom-right
+      if (g.get(x+1, y+1)==Cell::ALIVE){
+        count++;
+      }
+    }
+    //If the coordinate is on the left in between the corners
+    else if (x==0 && y>0 && y<(height-1)){
+      //Check the right
+      if (g.get(x+1, y)==Cell::ALIVE){
+        count++;
+      }
+      //Check the top
+      if (g.get(x, y-1)==Cell::ALIVE){
+        count++;
+      }
+      //Check the bottom
+      if (g.get(x, y+1)==Cell::ALIVE){
+        count++;
+      }
+      //Check the top-right
+      if (g.get(x+1, y-1)==Cell::ALIVE){
+        count++;
+      }
+      //Check the bottom-right
+      if (g.get(x+1, y+1)==Cell::ALIVE){
+        count++;
+      }
+    }
+    //If the coordinate is on the right in between the corners
+    else if (x==(width-1) && y>0 && y<(height-1)){
+      //Check the top
+      if (g.get(x, y-1)==Cell::ALIVE){
+        count++;
+      }
+      //Check the bottom
+      if (g.get(x, y+1)==Cell::ALIVE){
+        count++;
+      }
+      //Check the left
+      if (g.get(x-1, y)==Cell::ALIVE){
+        count++;
+      }
+      //Check the bottom-left
+      if (g.get(x-1, y+1)==Cell::ALIVE){
+        count++;
+      }
+      //Check the top-left
+      if (g.get(x-1, y-1)==Cell::ALIVE){
+        count++;
+      }
+    }
+    //If the coordinate is on top in between the corners
+    else if (x>0 && x<(width-1) && y==0){
+      //Check the bottom
+      if (g.get(x, y+1)==Cell::ALIVE){
+        count++;
+      }
+      //Check the left
+      if (g.get(x-1, y)==Cell::ALIVE){
+        count++;
+      }
+      //Check the right
+      if (g.get(x+1, y)==Cell::ALIVE){
+        count++;
+      }
+      //Check the bottom-left
+      if (g.get(x-1, y+1)==Cell::ALIVE){
+        count++;
+      }
+      //Check the bottom-right
+      if (g.get(x+1, y+1)==Cell::ALIVE){
+        count++;
+      }
+    }
+    //If the coordinate is on bottom in between the corners
+    else if (x>0 && x<(width-1) && y==(height-1)){
+      //Check the left
+      if (g.get(x-1, y)==Cell::ALIVE){
+        count++;
+      }
+      //Check the right
+      if (g.get(x+1, y)==Cell::ALIVE){
+        count++;
+      }
+      //Check the top
+      if (g.get(x, y-1)==Cell::ALIVE){
+        count++;
+      }
+      //Check the top-left
+      if (g.get(x-1, y-1)==Cell::ALIVE){
+        count++;
+      }
+      //Check the top-right
+      if (g.get(x+1, y-1)==Cell::ALIVE){
+        count++;
+      }
+    }
+
+    //If the coordinate is the top left corner
+    else if(x==0 && y==0){
+      //Check the right
+      if (g.get(x+1, y)==Cell::ALIVE){
+        count++;
+      }
+      //Check the bottom
+      if (g.get(x, y+1)==Cell::ALIVE){
+        count++;
+      }
+      //Check the bottom-right
+      if (g.get(x+1, y+1)==Cell::ALIVE){
+        count++;
+      }
+    }
+    //If the coordinate is the top right corner
+    else if(x==(width-1) && y==0){
+      //Check the bottom
+      if (g.get(x, y+1)==Cell::ALIVE){
+        count++;
+      }
+      //Check the left
+      if (g.get(x-1, y)==Cell::ALIVE){
+        count++;
+      }
+      //Check the bottom-left
+      if (g.get(x-1, y+1)==Cell::ALIVE){
+        count++;
+      }
+    }
+    //If the coordinate is the bottom left corner
+    else if(x==0 && y==(height-1)){
+      //Check the top
+      if (g.get(x, y-1)==Cell::ALIVE){
+        count++;
+      }
+      //Check the right
+      if (g.get(x+1, y)==Cell::ALIVE){
+        count++;
+      }
+      //Check the top-right
+      if (g.get(x+1, y-1)==Cell::ALIVE){
+        count++;
+      }
+    }
+    //If the coordinate is the bottom right corner
+    else if(x==(width-1) && y==(height-1)){
+      //Check the top
+      if (g.get(x, y-1)==Cell::ALIVE){
+        count++;
+      }
+      //Check the left
+      if (g.get(x-1, y)==Cell::ALIVE){
+        count++;
+      }
+      //Check the top-left
+      if (g.get(x-1, y-1)==Cell::ALIVE){
+        count++;
+      }
+    }
+  }
+  return count;
+}
 
 /**
  * World::step(toroidal)
@@ -359,6 +922,77 @@ World::World(){
  *      wraps to the right edge and the top to the bottom. Defaults to false.
  */
 
+void World::step(bool toroidal){
+  Grid g=this->get_state();
+  int height=this->get_height();
+  int width=this->get_width();
+  int count;
+  Grid a(width, height);
+  int alive=0;
+  for (int h=0; h<height; h++){
+    for (int w=0; w<width; w++){
+      count=this->count_neighbours(w, h, toroidal);
+      //If the cell has fewer than two neighbours, kill it
+      if (count<2){
+        a.set(w,h, Cell::DEAD);
+      }
+      //If a living cell has two or three neighbours, let it live
+      else if ((count==2 || count==3) && g.get(w, h)==Cell::ALIVE){
+        a.set(w,h, Cell::ALIVE);
+        alive++;
+      }
+      //If a living cell has more than three neighbours, kill it
+      else if (count>3 && g.get(w, h)==Cell::ALIVE){
+        a.set(w,h, Cell::DEAD);
+      }
+      else if (count==3 && g.get(w, h)==Cell::DEAD){
+        a.set(w,h, Cell::ALIVE);
+        alive++;
+      }
+    }
+  }
+  int dead=this->get_total_cells()-alive;
+  this->alive_cells=alive;
+  this->dead_cells=dead;
+  this->newState=g;
+  this->currState=a;
+}
+
+void World::step(){
+  Grid g=this->get_state();
+  int height=this->get_height();
+  int width=this->get_width();
+  int count;
+  int alive=0;
+  Grid a(width, height);
+  for (int h=0; h<height; h++){
+    for (int w=0; w<width; w++){
+      count=this->count_neighbours(w, h, false);
+
+      Cell cell=g.get(w, h);
+      //If the cell has fewer than two neighbours, kill it
+      if (count<2 && cell==Cell::ALIVE){
+        a.set(w,h, Cell::DEAD);
+      }
+      else if ((count==2 || count==3) && cell==Cell::ALIVE){
+        a.set(w,h, Cell::ALIVE);
+        alive++;
+      }
+      else if (count>3 && cell==Cell::ALIVE){
+        a.set(w,h, Cell::DEAD);
+      }
+      else if (count==3 && cell==Cell::DEAD){
+        a.set(w,h, Cell::ALIVE);
+        alive++;
+      }
+    }
+  }
+  int dead=this->get_total_cells()-alive;
+  this->alive_cells=alive;
+  this->dead_cells=dead;
+  this->newState=g;
+  this->currState=a;
+}
 
 /**
  * World::advance(steps, toroidal)
@@ -373,3 +1007,44 @@ World::World(){
  *      Optional parameter. If true then the step will consider the grid as a torus, where the left edge
  *      wraps to the right edge and the top to the bottom. Defaults to false.
  */
+
+void World::advance(int steps, bool toroidal){
+  for (int i=0; i<steps; i++){
+    this->step(toroidal);
+  }
+}
+
+void World::advance(int steps){
+  for (int i=0; i<steps; i++){
+    this->step(false);
+  }
+}
+
+/**int main(){
+  Grid g(6);
+
+  g.set(1, 3, Cell::ALIVE);
+  g.set(2, 3, Cell::ALIVE);
+  g.set(3, 3, Cell::ALIVE);
+  g.set(3, 2, Cell::ALIVE);
+  g.set(2, 1, Cell::ALIVE);
+  //        +------+
+  //        |      |
+  //        |  #   |
+  //        |   #  |
+  //        | ###  |
+  //        |      |
+  //        |      |
+  //        +------+
+  World w(g);
+  w.advance(1, false);
+  std::stringstream stream1;
+  stream1 << w.get_state();
+  const std::string observed1 = stream1.str();
+  std::cout<<observed1<<std::endl;
+  w.advance(12, false);
+  std::stringstream stream;
+  stream << w.get_state();
+  const std::string observed = stream.str();
+  std::cout<<observed<<std::endl;
+}*/
