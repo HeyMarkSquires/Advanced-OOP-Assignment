@@ -468,6 +468,11 @@ void Grid::resize(int width, int height){
    Cell n;
    int w=this->width;
    int index=(y*w)+x;
+   int height=this->get_height();
+   int width=this->get_width();
+   if (x>width || y>height || x<0 || y<0){
+     throw "NOPE";
+   }
    n=(this->cellList).at(index);
    return n;
  }
@@ -505,6 +510,11 @@ void Grid::resize(int width, int height){
    std::vector<Cell> l=this->cellList;
    int currAlive=this->get_alive_cells();
    int currDead=this->get_dead_cells();
+   int height=this->get_height();
+   int width=this->get_width();
+   if (x>width || y>height || x<0 || y<0){
+     throw "NOPE";
+   }
    //Getting the current state of the cell
 
    if (c==Cell::ALIVE){
@@ -570,6 +580,11 @@ Cell& Grid::operator()(int x, int y){
   //Feels cheaty...
   int d=this->get_dead_cells();
   int a=this->get_alive_cells();
+  int height=this->get_height();
+  int width=this->get_width();
+  if (x>width || y>height || x<0 || y<0){
+    throw "NOPE";
+  }
   if (this->get(x,y)==Cell::ALIVE){
     a--;
     d++;
@@ -618,6 +633,11 @@ Cell& Grid::operator()(int x, int y){
 Cell Grid::operator()(int x, int y) const{
    Cell result;
    result=this->get(x, y);
+   int height=this->get_height();
+   int width=this->get_width();
+   if (x>width || y>height || x<0 || y<0){
+     throw "NOPE";
+   }
    return result;
 }
 
@@ -658,6 +678,14 @@ Cell Grid::operator()(int x, int y) const{
 
 Grid Grid::crop(int x0, int y0, int x1, int y1){
   std::vector<Cell> currList=this->cellList;
+  int currHeight=this->get_height();
+  int currWidth=this->get_width();
+
+  //Exception handling
+  if (x1>currWidth || y1>currHeight || x0>x1 || y0>y1 || x0<0 || y0<0){
+    throw "NOPE";
+  }
+
   int height;
   int width;
   if (x0<x1){
@@ -792,8 +820,13 @@ void Grid::merge(Grid other, int x0, int y0){
   int totalAlive=this->get_alive_cells();
   int otherHeight=other.get_height();
   int otherWidth=other.get_width();
+  int myHeight=this->get_height();
+  int myWidth=this->get_width();
   int index=0;
   int myIndex;
+  if (x0<0 || y0<0 || x0+otherWidth>myWidth || y0+otherHeight>myHeight){
+    throw "NOPE";
+  }
   for (int i=y0; i<otherHeight+y0; i++){
     for (int j=x0; j<otherWidth+x0; j++){
       myIndex=this->get_index(j, i);
@@ -826,8 +859,13 @@ void Grid::merge(Grid other, int x0, int y0, bool alive_only){
   int totalAlive=this->get_alive_cells();
   int otherHeight=other.get_height();
   int otherWidth=other.get_width();
+  int myHeight=this->get_height();
+  int myWidth=this->get_width();
   int index=0;
   int myIndex;
+  if (x0<0 || y0<0 || x0+otherWidth>myWidth || y0+otherHeight>myHeight){
+    throw "NOPE";
+  }
   for (int i=y0; i<otherHeight+y0; i++){
     for (int j=x0; j<otherWidth+x0; j++){
       myIndex=this->get_index(j, i);
@@ -1010,3 +1048,13 @@ std::ostream& operator<<(std::ostream& stream, const Grid& grid){
 }
 
 Grid::~Grid(){ }
+
+/**int main(){
+  Grid g(6,4);
+  int a=0;
+  if (a==0){
+    throw "Hello";
+  }
+  std::cout<<"Hello there"<<std::endl;
+
+}*/

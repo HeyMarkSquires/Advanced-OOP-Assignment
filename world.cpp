@@ -603,35 +603,43 @@ int World::count_neighbours(int x, int y, bool toroidal){
       //Check the left
       if (g.get(x-1, y)==Cell::ALIVE){
         count++;
+        //std::cout<<"left "<<count<<std::endl;
       }
       //Check the right
       if (g.get(0, y)==Cell::ALIVE){
         count++;
+        //std::cout<<"right "<<count<<std::endl;
       }
       //Check the top
       if (g.get(x, (height-1))==Cell::ALIVE){
         count++;
+        //std::cout<<"top "<<count<<std::endl;
       }
       //Check the bottom
       if (g.get(x, y+1)==Cell::ALIVE){
         count++;
+        //std::cout<<"bottom "<<count<<std::endl;
       }
 
       //Check the bottom-left
-      if (g.get(width-1, y+1)==Cell::ALIVE){
+      if (g.get(x-1, y+1)==Cell::ALIVE){
         count++;
+        //std::cout<<"bottom-left "<<count<<std::endl;
       }
       //Check the top-left
       if (g.get(x-1, height-1)==Cell::ALIVE){
         count++;
+        //std::cout<<"top-left "<<count<<std::endl;
       }
       //Check the bottom-right
       if (g.get(0, y+1)==Cell::ALIVE){
         count++;
+        //std::cout<<"bottom-right "<<count<<std::endl;
       }
       //Check the top-right
       if (g.get(0, height-1)==Cell::ALIVE){
         count++;
+        //std::cout<<"top-right "<<count<<std::endl;
       }
 
     }
@@ -1028,6 +1036,8 @@ void World::advance(int steps){
   g.set(3, 3, Cell::ALIVE);
   g.set(3, 2, Cell::ALIVE);
   g.set(2, 1, Cell::ALIVE);
+
+  World w(g);
   //        +------+
   //        |      |
   //        |  #   |
@@ -1036,15 +1046,5 @@ void World::advance(int steps){
   //        |      |
   //        |      |
   //        +------+
-  World w(g);
-  w.advance(1, false);
-  std::stringstream stream1;
-  stream1 << w.get_state();
-  const std::string observed1 = stream1.str();
-  std::cout<<observed1<<std::endl;
-  w.advance(12, false);
-  std::stringstream stream;
-  stream << w.get_state();
-  const std::string observed = stream.str();
-  std::cout<<observed<<std::endl;
+  w.advance(24, true);
 }*/

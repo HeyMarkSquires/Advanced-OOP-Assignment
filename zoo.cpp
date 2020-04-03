@@ -31,6 +31,9 @@
 #include <fstream>
 #include <iostream>
 #include <iomanip>
+#include <bitset>
+#include <cstring>
+#include <algorithm>
 
 /**
  * Zoo::glider()
@@ -52,7 +55,6 @@
  * @return
  *      Returns a Grid containing a glider.
  */
-
 Grid Zoo::glider(){
   Grid result(3, 3);
   result.set(1, 0, Cell::ALIVE);
@@ -62,6 +64,8 @@ Grid Zoo::glider(){
   result.set(2, 2, Cell::ALIVE);
   return result;
 }
+
+
 
 /**
  * Zoo::r_pentomino()
@@ -115,7 +119,7 @@ Grid Zoo::r_pentomino(){
  * @return
  *      Returns a grid containing a light weight spaceship.
  */
- Grid Zoo::light_weight_spaceship(){
+Grid Zoo::light_weight_spaceship(){
    Grid result(5, 4);
    result.set(1, 0, Cell::ALIVE);
    result.set(4, 0, Cell::ALIVE);
@@ -154,16 +158,36 @@ Grid Zoo::r_pentomino(){
  *          - The character for a cell is not the ALIVE or DEAD character.
  */
 
-Grid Zoo::load_ascii(char* path){
-  ifstream inFile;
-  char in;
+Grid Zoo::load_ascii(std::string path){
+  std::ifstream inFile;
+  std::string n;
   int width;
   int height;
   inFile.open(path);
   if (!inFile) {
-    cout << "Unable to open file";
+    std::cout << "Unable to open file";
     exit(1); // terminate with error
   }
+  inFile>>width;
+  inFile>>height;
+  Grid g(width, height);
+  std::cout<<g.get_dead_cells()<<" "<<g.get_alive_cells()<<std::endl;
+  int o=-1;
+  while (std::getline(inFile, n)){
+    if (o>=0){
+      for (int i=0; i<width; i++){
+        if (n[i]==' '){}
+        else if (n[i]=='#'){
+          g.set(i,o, Cell::ALIVE);
+        }
+        else{
+          //throw here
+        }
+      }
+    }
+    o++;
+  }
+  return g;
 }
 
 /**
@@ -195,6 +219,37 @@ Grid Zoo::load_ascii(char* path){
  *      Throws std::runtime_error or sub-class if the file cannot be opened.
  */
 
+void Zoo::save_ascii(std::string path, Grid grid){
+  std::ofstream outfile;
+
+  outfile.open(path);
+  if (!std::ifstream(path).is_open()){
+    throw "No file";
+  }
+  for (int i=0; i<grid.get_width(); i++){
+    if (i==0){
+      outfile<<grid.get_width();
+    }
+    else if (i==1){
+      outfile<<" ";
+    }
+    else if (i==2){
+      outfile<<grid.get_height();
+    }
+  }
+  outfile<<"\n";
+  for (int j=0; j<grid.get_height(); j++){
+    for (int i=0; i<grid.get_width(); i++){
+      if (grid.get(i, j)==Cell::ALIVE){
+        outfile<<"#";
+      }
+      else{
+        outfile<<" ";
+      }
+    }
+    outfile<<"\n";
+  }
+}
 
 /**
  * Zoo::load_binary(path)
@@ -219,6 +274,49 @@ Grid Zoo::load_ascii(char* path){
  *          - The file ends unexpectedly.
  */
 
+Grid Zoo::load_binary(std::string path){
+  std::streampos size;
+  int width=0;
+  int height=0;
+  std::stringstream stream;
+
+  std::ifstream file(path, std::ios::binary);
+  if (file) {
+    // get length of file:
+    file.seekg (0, file.end);
+    int length = file.tellg();
+    file.seekg (0, file.beg);
+
+    char * buffer = new char [length];
+    // read data as a block:
+    file.read (buffer,length);
+    for (int i=3; i>=0; i--){
+      width+=(int) (buffer[i]);
+    }
+    for (int i=7; i>=4; i--){
+      height+=(int) (buffer[i]);
+    }
+    Grid g(width, height);
+    for (int i=8; i<length; i++){
+      std::string s=std::bitset<8>(buffer[i]).to_string();
+      int n=s.length();
+      for (int j=n-1; j>=0; j--){
+        stream<<s[j];
+      }
+    }
+    const std::string observed = stream.str();
+    int v=0;
+    for (int i=0; i<height; i++){
+      for (int j=0; j<width; j++){
+        if (observed[v]=='1'){
+          g.set(j, i, Cell::ALIVE);
+        }
+        v++;
+      }
+    }
+    return g;
+  }
+}
 
 /**
  * Zoo::save_binary(path, grid)
@@ -248,9 +346,46 @@ Grid Zoo::load_ascii(char* path){
  * @throws
  *      Throws std::runtime_error or sub-class if the file cannot be opened.
  */
+void Zoo::save_binary(std::string path, Grid g){
+  int height=g.get_height();
+  int width=g.get_width();
+  int bHeight=g.get_height()<<24;
+  int bWidth=g.get_width()<<24;
+  std::string h=std::bitset<32>(bHeight).to_string();
+  std::string w=std::bitset<32>(bWidth).to_string();
+  std::stringstream stream;
+  //stream<<w;
+  //stream<<h;
+
+  //Getting the bits sorted
+  for (int y=0; y<height; y++){
+    for (int x=0; x<width; x++){
+      if (g.get(x, y)==Cell::ALIVE){
+        stream<<"1";
+      }
+      else{
+        stream<<"0";
+      }
+    }
+  }
+  const std::string observed = stream.str();
+  int y=observed.length()/8;
+  int v=0;
+  for (int j=0; j<y; j++){
+    char c;
+    for (int i=0; i<8; i++){
+      //std::cout<<observed[v];
+      c+=observed[v];
+      v++;
+    }
+    std::cout<<c<<std::endl;
+  }
+}
 
 int main(){
-  Grid g;
-  g = Zoo::load_ascii("test_inputs/GLIDER.gol");
+  Grid g(6, 4);
+  g(0,0)=Cell::ALIVE;
+  g(5,3)=Cell::ALIVE;
+  Zoo::save_binary("meh", g);
   return 0;
 }
