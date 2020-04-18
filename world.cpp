@@ -18,13 +18,14 @@
  *          - Moving off the left edge you appear on the right edge and vice versa.
  *          - Moving off the top edge you appear on the bottom edge and vice versa.
  *
- * @author YOUR_STUDENT_NUMBER
+ * @author 963356
  * @date March, 2020
  */
-#include "world.h"
-#include "grid.h"
 // Include the minimal number of headers needed to support your implementation.
 // #include ...
+#include "world.h"
+#include "grid.h"
+#include "zoo.h"
 
 /**
  * World::World()
@@ -38,7 +39,7 @@
  *
  */
 
-World::World(){}
+World::World():width(0), height(0), total_cells(0), dead_cells(0), alive_cells(0){}
 
 /**
  * World::World(square_size)
@@ -120,7 +121,7 @@ World::~World(){ }
 /**
  * World::get_width()
  *
- * Gets the current width of the world.
+ * Gets the current width of t\he world.
  * The function should be callable from a constant context.
  *
  * @example
@@ -309,11 +310,11 @@ Grid World::get_state() const{
  */
 
 void World::resize(int square_size){
-  Grid current=this->get_state();
-  current.resize(square_size);
-  this->currState=current;
-  this->dead_cells=(square_size*square_size)-current.get_alive_cells();
-  this->alive_cells=current.get_alive_cells();
+  Grid currentState=this->get_state();
+  currentState.resize(square_size);
+  this->currState=currentState;
+  this->dead_cells=(square_size*square_size)-currentState.get_alive_cells();
+  this->alive_cells=currentState.get_alive_cells();
 }
 
 /**
@@ -340,11 +341,11 @@ void World::resize(int square_size){
  */
 
  void World::resize(int new_width, int new_height){
-   Grid current=this->get_state();
-   current.resize(new_width, new_height);
-   this->currState=current;
-   this->dead_cells=(new_width*new_height)-current.get_alive_cells();
-   this->alive_cells=current.get_alive_cells();
+   Grid currentState=this->get_state();
+   currentState.resize(new_width, new_height);
+   this->currState=currentState;
+   this->dead_cells=(new_width*new_height)-currentState.get_alive_cells();
+   this->alive_cells=currentState.get_alive_cells();
  }
 
 /**
@@ -931,30 +932,30 @@ int World::count_neighbours(int x, int y, bool toroidal){
  */
 
 void World::step(bool toroidal){
-  Grid g=this->get_state();
+  Grid currState=this->get_state();
   int height=this->get_height();
   int width=this->get_width();
   int count;
-  Grid a(width, height);
+  Grid newState(width, height);
   int alive=0;
   for (int h=0; h<height; h++){
     for (int w=0; w<width; w++){
       count=this->count_neighbours(w, h, toroidal);
       //If the cell has fewer than two neighbours, kill it
       if (count<2){
-        a.set(w,h, Cell::DEAD);
+        newState.set(w,h, Cell::DEAD);
       }
       //If a living cell has two or three neighbours, let it live
-      else if ((count==2 || count==3) && g.get(w, h)==Cell::ALIVE){
-        a.set(w,h, Cell::ALIVE);
+      else if ((count==2 || count==3) && currState.get(w, h)==Cell::ALIVE){
+        newState.set(w,h, Cell::ALIVE);
         alive++;
       }
       //If a living cell has more than three neighbours, kill it
-      else if (count>3 && g.get(w, h)==Cell::ALIVE){
-        a.set(w,h, Cell::DEAD);
+      else if (count>3 && currState.get(w, h)==Cell::ALIVE){
+        newState.set(w,h, Cell::DEAD);
       }
-      else if (count==3 && g.get(w, h)==Cell::DEAD){
-        a.set(w,h, Cell::ALIVE);
+      else if (count==3 && currState.get(w, h)==Cell::DEAD){
+        newState.set(w,h, Cell::ALIVE);
         alive++;
       }
     }
@@ -962,35 +963,35 @@ void World::step(bool toroidal){
   int dead=this->get_total_cells()-alive;
   this->alive_cells=alive;
   this->dead_cells=dead;
-  this->newState=g;
-  this->currState=a;
+  this->newState=currState;
+  this->currState=newState;
 }
 
 void World::step(){
-  Grid g=this->get_state();
+  Grid currState=this->get_state();
   int height=this->get_height();
   int width=this->get_width();
   int count;
   int alive=0;
-  Grid a(width, height);
+  Grid newState(width, height);
   for (int h=0; h<height; h++){
     for (int w=0; w<width; w++){
       count=this->count_neighbours(w, h, false);
 
-      Cell cell=g.get(w, h);
+      Cell cell=currState.get(w, h);
       //If the cell has fewer than two neighbours, kill it
       if (count<2 && cell==Cell::ALIVE){
-        a.set(w,h, Cell::DEAD);
+        newState.set(w,h, Cell::DEAD);
       }
       else if ((count==2 || count==3) && cell==Cell::ALIVE){
-        a.set(w,h, Cell::ALIVE);
+        newState.set(w,h, Cell::ALIVE);
         alive++;
       }
       else if (count>3 && cell==Cell::ALIVE){
-        a.set(w,h, Cell::DEAD);
+        newState.set(w,h, Cell::DEAD);
       }
       else if (count==3 && cell==Cell::DEAD){
-        a.set(w,h, Cell::ALIVE);
+        newState.set(w,h, Cell::ALIVE);
         alive++;
       }
     }
@@ -998,8 +999,8 @@ void World::step(){
   int dead=this->get_total_cells()-alive;
   this->alive_cells=alive;
   this->dead_cells=dead;
-  this->newState=g;
-  this->currState=a;
+  this->newState=currState;
+  this->currState=newState;
 }
 
 /**
@@ -1027,24 +1028,3 @@ void World::advance(int steps){
     this->step(false);
   }
 }
-
-/**int main(){
-  Grid g(6);
-
-  g.set(1, 3, Cell::ALIVE);
-  g.set(2, 3, Cell::ALIVE);
-  g.set(3, 3, Cell::ALIVE);
-  g.set(3, 2, Cell::ALIVE);
-  g.set(2, 1, Cell::ALIVE);
-
-  World w(g);
-  //        +------+
-  //        |      |
-  //        |  #   |
-  //        |   #  |
-  //        | ###  |
-  //        |      |
-  //        |      |
-  //        +------+
-  w.advance(24, true);
-}*/

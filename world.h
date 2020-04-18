@@ -5,7 +5,7 @@
  * The test suites provide granular BDD style (Behaviour Driven Development) test cases
  * which will help further understand the specification you need to code to.
  *
- * @author YOUR_STUDENT_NUMBER
+ * @author 963356
  * @date March, 2020
  */
 #pragma once
@@ -32,6 +32,8 @@ class World {
     int dead_cells;
     Grid currState;
     Grid newState;
+
+    int count_neighbours(int x, int y, bool toroidal);
   public:
     World();
     World(int size);
@@ -44,7 +46,6 @@ class World {
     int get_dead_cells() const;
     void resize(int square_size);
     void resize(int new_width, int new_height);
-    int count_neighbours(int x, int y, bool toroidal);
     Grid get_state() const;
     void step(bool toroidal);
     void step();

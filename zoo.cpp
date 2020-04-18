@@ -18,7 +18,7 @@
  *                padded with zero or more 0 bits.
  *              - a 0 bit should be considered Cell::DEAD, a 1 bit should be considered Cell::ALIVE.
  *
- * @author YOUR_STUDENT_NUMBER
+ * @author 963356
  * @date March, 2020
  */
 #include "zoo.h"
@@ -160,34 +160,42 @@ Grid Zoo::light_weight_spaceship(){
 
 Grid Zoo::load_ascii(std::string path){
   std::ifstream inFile;
-  std::string n;
+  std::string line;
   int width;
   int height;
   inFile.open(path);
   if (!inFile) {
-    std::cout << "Unable to open file";
-    exit(1); // terminate with error
+    throw "NOPE";
   }
   inFile>>width;
   inFile>>height;
-  Grid g(width, height);
-  std::cout<<g.get_dead_cells()<<" "<<g.get_alive_cells()<<std::endl;
-  int o=-1;
-  while (std::getline(inFile, n)){
-    if (o>=0){
-      for (int i=0; i<width; i++){
-        if (n[i]==' '){}
-        else if (n[i]=='#'){
-          g.set(i,o, Cell::ALIVE);
-        }
-        else{
-          //throw here
-        }
+  if (width<=0 || height<=0){
+    throw "NOPE";
+  }
+  Grid grid(width, height);
+  std::getline(inFile, line);
+  int y=0;
+  int length;
+  while (std::getline(inFile, line)){
+    length=line.length();
+    //If the line isn't of the expected length, throw it
+    if (length!=width){
+      throw "NOPE";
+    }
+    for (int x=0; x<width; x++){
+      if (line[x]==' '){}
+      else if (line[x]=='#'){
+        grid.set(x,y, Cell::ALIVE);
+      }
+      //If the character is neither a '#' or a ' ', throw it
+      else{
+        throw "NOPE";
       }
     }
-    o++;
+    y++;
   }
-  return g;
+  inFile.close();
+  return grid;
 }
 
 /**
@@ -249,6 +257,7 @@ void Zoo::save_ascii(std::string path, Grid grid){
     }
     outfile<<"\n";
   }
+  outfile.close();
 }
 
 /**
@@ -281,13 +290,16 @@ Grid Zoo::load_binary(std::string path){
   std::stringstream stream;
 
   std::ifstream file(path, std::ios::binary);
+  if (!file) {
+    file.close();
+    throw "Binary file not found"; // terminate with error
+  }
   if (file) {
     // get length of file:
     file.seekg (0, file.end);
     int length = file.tellg();
     file.seekg (0, file.beg);
-
-    char * buffer = new char [length];
+    char* buffer=new char [length];
     // read data as a block:
     file.read (buffer,length);
     for (int i=3; i>=0; i--){
@@ -305,6 +317,14 @@ Grid Zoo::load_binary(std::string path){
       }
     }
     const std::string observed = stream.str();
+    //If there are not enough bits, it's malformed
+    int numCells=height*width;
+    int bitLength=observed.length();
+    if (bitLength<numCells){
+      delete [] buffer;
+      file.close();
+      throw "Malformed data";
+    }
     int v=0;
     for (int i=0; i<height; i++){
       for (int j=0; j<width; j++){
@@ -314,7 +334,13 @@ Grid Zoo::load_binary(std::string path){
         v++;
       }
     }
+    file.close();
+    delete [] buffer;
     return g;
+  }
+  else{
+    file.close();
+    return 0;
   }
 }
 
@@ -347,17 +373,24 @@ Grid Zoo::load_binary(std::string path){
  *      Throws std::runtime_error or sub-class if the file cannot be opened.
  */
 void Zoo::save_binary(std::string path, Grid g){
+  std::ofstream outfile;
+
+  outfile.open(path);
+  if (!std::ifstream(path).is_open()){
+    throw "No file";
+  }
   int height=g.get_height();
   int width=g.get_width();
-  int bHeight=g.get_height()<<24;
-  int bWidth=g.get_width()<<24;
+  int bHeight=g.get_height();
+  int bWidth=g.get_width();
   std::string h=std::bitset<32>(bHeight).to_string();
   std::string w=std::bitset<32>(bWidth).to_string();
+  std::stringstream mstream;
   std::stringstream stream;
-  //stream<<w;
-  //stream<<h;
+  mstream<<w;
+  mstream<<h;
 
-  //Getting the bits sorted
+  //Converting each of the cells into bit representations
   for (int y=0; y<height; y++){
     for (int x=0; x<width; x++){
       if (g.get(x, y)==Cell::ALIVE){
@@ -368,24 +401,89 @@ void Zoo::save_binary(std::string path, Grid g){
       }
     }
   }
-  const std::string observed = stream.str();
-  int y=observed.length()/8;
-  int v=0;
-  for (int j=0; j<y; j++){
-    char c;
-    for (int i=0; i<8; i++){
-      //std::cout<<observed[v];
-      c+=observed[v];
-      v++;
-    }
-    std::cout<<c<<std::endl;
+  std::string observed = stream.str();
+  //Reversing the set of bits and putting it into the main stream
+  int p=0;
+  int n=observed.length()/8;
+  int remain=observed.length()%8;
+  if (remain!=0){
+    n++;
   }
-}
+  for (int i=0; i<remain; i++){
+    stream<<"0";
+  }
+  observed = stream.str();
 
-int main(){
-  Grid g(6, 4);
-  g(0,0)=Cell::ALIVE;
-  g(5,3)=Cell::ALIVE;
-  Zoo::save_binary("meh", g);
-  return 0;
+  std::string s=mstream.str();
+
+  //Getting the width
+  std::stringstream stream1;
+  for (int i=24; i<32; i++){
+    stream1<<s[i];
+  }
+  std::string out = stream1.str();
+  outfile<<(char)((std::bitset<8>(out)).to_ulong());
+
+  std::stringstream stream2;
+  for (int i=16; i<24; i++){
+    stream2<<s[i];
+  }
+  out = stream2.str();
+  outfile<<(char)((std::bitset<8>(out)).to_ulong());
+
+  std::stringstream stream3;
+  for (int i=8; i<16; i++){
+    stream3<<s[i];
+  }
+  out = stream3.str();
+  outfile<<(char)((std::bitset<8>(out)).to_ulong());
+
+  std::stringstream stream4;
+  for (int i=0; i<8; i++){
+    stream4<<s[i];
+  }
+  out = stream4.str();
+  outfile<<(char)((std::bitset<8>(out)).to_ulong());
+
+
+  //Getting the height
+  std::stringstream stream5;
+  for (int i=56; i<64; i++){
+    stream5<<s[i];
+  }
+  out = stream5.str();
+  outfile<<(char)((std::bitset<8>(out)).to_ulong());
+
+  std::stringstream stream6;
+  for (int i=48; i<56; i++){
+    stream6<<s[i];
+  }
+  out = stream6.str();
+  outfile<<(char)((std::bitset<8>(out)).to_ulong());
+
+  std::stringstream stream7;
+  for (int i=40; i<48; i++){
+    stream7<<s[i];
+  }
+  out = stream7.str();
+  outfile<<(char)((std::bitset<8>(out)).to_ulong());
+
+  std::stringstream stream8;
+  for (int i=32; i<40; i++){
+    stream8<<s[i];
+  }
+  out = stream8.str();
+  outfile<<(char)((std::bitset<8>(out)).to_ulong());
+
+  for (int y=0; y<n; y++){
+
+    std::stringstream stream9;
+    for (int i=7; i>=0; i--){
+      stream9<<observed[i+p];
+    }
+    out = stream9.str();
+    outfile<<(char)((std::bitset<8>(out)).to_ulong());
+    p+=8;
+  }
+  outfile.close();
 }
